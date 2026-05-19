@@ -1,0 +1,33 @@
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+*~
+
+# Virtual environment
+Lib/
+Scripts/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Dataset files (too large for git)
+dataset_final/
+GroceryStoreDataset-master/
+dataset.zip
+
+# Model weights and outputs
+weights/
+*.pth
+*.pt
+
+# Uploads and temporary files
+backend/uploads/
+backend/__pycache__/
+temp.jpg
+
+# Logs
+*.log

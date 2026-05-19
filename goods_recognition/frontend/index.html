@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>商品识别系统</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #0d0f14;
+    --surface: #161921;
+    --surface2: #1c202c;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --accent: #4ade80;
+    --accent2: #22d3ee;
+    --accent3: #f472b6;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --muted2: #4b5563;
+    --error: #f87171;
+    --warn: #fbbf24;
+    --input-bg: #1e2130;
+    --sidebar-w: 220px;
+    --header-h: 60px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+}
+
+/* ── 侧边栏 ── */
+.sidebar {
+    width: var(--sidebar-w);
+    height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+}
+
+.sidebar-logo {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.logo-mark {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+.logo-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.4;
+    letter-spacing: 0.03em;
+}
+.logo-label strong { color: var(--text); font-size: 13px; display: block; }
+
+.nav-section {
+    padding: 16px 12px 8px;
+}
+.nav-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--muted2);
+    padding: 0 8px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    font-family: 'Space Mono', monospace;
+}
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    margin-bottom: 2px;
+    border: 1px solid transparent;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active {
+    background: rgba(74,222,128,0.1);
+    color: var(--accent);
+    border-color: rgba(74,222,128,0.2);
+}
+.nav-item .icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+.nav-badge {
+    margin-left: auto;
+    background: var(--accent);
+    color: #0a1a0a;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-family: 'Space Mono', monospace;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding: 16px 12px;
+    border-top: 1px solid var(--border);
+}
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    position: relative;
+}
+.user-info:hover { background: var(--surface2); }
+.user-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--border2);
+}
+.user-meta { flex: 1; min-width: 0; }
+.user-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-role { font-size: 11px; color: var(--accent); font-family: 'Space Mono', monospace; }
+.logout-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 8px;
+    background: transparent;
+    border: 1px solid var(--border2);
+    border-radius: 7px;
+    color: var(--muted);
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.logout-btn:hover { border-color: var(--error); color: var(--error); background: rgba(248,113,113,0.05); }
+
+/* ── 主内容区 ── */
+.main-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.topbar {
+    height: var(--header-h);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    flex-shrink: 0;
+    background: var(--surface);
+}
+.topbar-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text);
+}
+.topbar-meta {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+.status-dot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+}
+.dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.content {
+    flex: 1;
+    padding: 28px;
+    overflow-y: auto;
+}
+
+/* ── 通用卡片 ── */
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 24px;
+}
+.card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.card-title .ct-icon { font-size: 16px; }
+
+/* ── 识别页 ── */
+.recog-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+    align-items: start;
+}
+
+.drop-zone {
+    position: relative;
+    min-height: 420px;
+    border: 2px dashed var(--border2);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--surface);
+    overflow: hidden;
+}
+.drop-zone:hover { border-color: var(--accent); background: rgba(74,222,128,0.02); }
+.drop-zone.drag-over { border-color: var(--accent); background: rgba(74,222,128,0.05); }
+.drop-zone .dz-icon { font-size: 48px; opacity: 0.3; }
+.drop-zone .dz-text { color: var(--muted); font-size: 14px; text-align: center; }
+.drop-zone .dz-sub { color: var(--muted2); font-size: 12px; font-family: 'Space Mono', monospace; }
+#preview-img, #preview-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #000;
+    border-radius: 12px;
+}
+
+.action-panel { display: flex; flex-direction: column; gap: 14px; }
+
+.btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    background: var(--surface2);
+    color: var(--text);
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    width: 100%;
+}
+.btn:hover { border-color: var(--border2); background: #232737; transform: translateY(-1px); }
+.btn-accent {
+    background: linear-gradient(135deg, var(--accent), #22c55e);
+    border-color: transparent;
+    color: #0a1a0a;
+    font-weight: 700;
+    box-shadow: 0 4px 14px rgba(74,222,128,0.2);
+}
+.btn-accent:hover { box-shadow: 0 6px 20px rgba(74,222,128,0.3); border-color: transparent; }
+.btn-danger { border-color: rgba(248,113,113,0.3); color: var(--error); }
+.btn-danger:hover { background: rgba(248,113,113,0.08); border-color: var(--error); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+/* 结果卡 */
+.result-display {
+    padding: 16px;
+    background: var(--input-bg);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+}
+.result-main {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 6px;
+    font-family: 'Space Mono', monospace;
+    min-height: 36px;
+}
+.result-sub { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+.conf-bar-wrap { background: var(--surface); border-radius: 6px; height: 6px; overflow: hidden; margin-bottom: 10px; }
+.conf-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 6px; transition: width 0.5s ease; width: 0%; }
+
+.top3-list { display: flex; flex-direction: column; gap: 6px; }
+.top3-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+}
+.top3-bar-wrap { flex: 1; background: var(--surface); border-radius: 4px; height: 4px; overflow: hidden; }
+.top3-bar { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+
+.meta-row { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+.meta-chip {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    background: var(--surface);
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+}
+
+/* ── 统计页 ── */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+.stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+}
+.stat-card.green::before { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+.stat-card.blue::before  { background: linear-gradient(90deg, var(--accent2), #818cf8); }
+.stat-card.pink::before  { background: linear-gradient(90deg, var(--accent3), var(--accent2)); }
+.stat-card.yellow::before{ background: linear-gradient(90deg, var(--warn), var(--accent3)); }
+.stat-num { font-size: 32px; font-weight: 700; font-family: 'Space Mono', monospace; margin-bottom: 4px; }
+.stat-label { font-size: 12px; color: var(--muted); }
+.stat-icon { position: absolute; right: 16px; top: 16px; font-size: 24px; opacity: 0.2; }
+
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.chart-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+}
+.chart-inner { position: relative; height: 260px; }
+
+/* ── 历史记录 ── */
+.history-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+.search-input {
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    color: var(--text);
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 200px;
+}
+.search-input:focus { border-color: var(--accent); }
+.search-input::placeholder { color: var(--muted2); }
+
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+    text-align: left;
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    text-transform: uppercase;
+    font-family: 'Space Mono', monospace;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+.data-table td {
+    padding: 12px 14px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tbody tr { transition: background 0.15s; }
+.data-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+.tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'Space Mono', monospace;
+}
+.tag-green { background: rgba(74,222,128,0.1); color: var(--accent); }
+.tag-blue  { background: rgba(34,211,238,0.1); color: var(--accent2); }
+.tag-pink  { background: rgba(244,114,182,0.1); color: var(--accent3); }
+
+.conf-inline { display: flex; align-items: center; gap: 8px; }
+.conf-inline .bar { flex: 1; max-width: 60px; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+.conf-inline .bar-fill { height: 100%; background: var(--accent); border-radius: 2px; }
+
+.icon-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 10px;
+    color: var(--muted);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.icon-btn:hover { border-color: var(--border2); color: var(--text); }
+.icon-btn.red:hover { border-color: var(--error); color: var(--error); }
+
+/* 分页 */
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    justify-content: flex-end;
+}
+.page-btn {
+    padding: 5px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    transition: all 0.15s;
+}
+.page-btn:hover { border-color: var(--accent); color: var(--accent); }
+.page-btn.active { background: rgba(74,222,128,0.1); border-color: var(--accent); color: var(--accent); }
+.page-info { font-size: 12px; color: var(--muted); font-family: 'Space Mono', monospace; }
+
+/* ── 系统管理 ── */
+.mgmt-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; align-items: start; }
+
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.05em; text-transform: uppercase; font-family: 'Space Mono', monospace; }
+.form-input {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.form-input:focus { border-color: var(--accent); }
+
+/* ── 公告 ── */
+.notice-card {
+    border: 1px solid rgba(74,222,128,0.2);
+    background: rgba(74,222,128,0.04);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    position: relative;
+}
+.notice-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+.notice-content { font-size: 14px; color: var(--muted); line-height: 1.7; white-space: pre-wrap; }
+.notice-meta { font-size: 11px; color: var(--muted2); margin-top: 10px; font-family: 'Space Mono', monospace; display: flex; gap: 14px; }
+
+textarea.form-input { resize: vertical; min-height: 120px; }
+
+/* ── 图片预览弹窗 ── */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    backdrop-filter: blur(4px);
+}
+.modal-overlay.show { opacity: 1; pointer-events: all; }
+.modal-overlay img {
+    max-width: 90%;
+    max-height: 85vh;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+/* ── Toast ── */
+.toast-wrap {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 9999;
+    pointer-events: none;
+}
+.toast {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: 13px;
+    color: var(--text);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    animation: toastIn 0.3s ease both;
+    min-width: 200px;
+    pointer-events: all;
+}
+.toast.ok { border-color: rgba(74,222,128,0.3); }
+.toast.err { border-color: rgba(248,113,113,0.3); }
+@keyframes toastIn { from { opacity:0; transform: translateX(20px); } to { opacity:1; transform: translateX(0); } }
+
+/* Spinner */
+.spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.15);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty-state {
+    text-align: center;
+    padding: 48px;
+    color: var(--muted2);
+}
+.empty-state .es-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.3; }
+.empty-state p { font-size: 14px; }
+</style>
+</head>
+<body>
+
+<!-- 侧边栏 -->
+<div class="sidebar">
+    <div class="sidebar-logo">
+        <div class="logo-mark">🔍</div>
+        <div class="logo-label">
+            <strong>商品识别</strong>
+            GOODS RECOGNITION
+        </div>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-label">主功能</div>
+        <div class="nav-item active" id="nav-recognition" onclick="goTo('recognition')">
+            <span class="icon">📷</span> 图片识别
+        </div>
+        <div class="nav-item" id="nav-history" onclick="goTo('history')">
+            <span class="icon">📋</span> 识别历史
+        </div>
+        <div class="nav-item" id="nav-stats" onclick="goTo('stats')">
+            <span class="icon">📊</span> 数据统计
+        </div>
+    </div>
+
+    <div class="nav-section">
+        <div class="nav-label">管理</div>
+        <div class="nav-item" id="nav-notice" onclick="goTo('notice')">
+            <span class="icon">📢</span> 系统公告
+        </div>
+        <div class="nav-item" id="nav-system" onclick="goTo('system')">
+            <span class="icon">⚙️</span> 系统管理
+        </div>
+    </div>
+
+    <div class="sidebar-footer">
+        <div class="user-info">
+            <img id="sidebarAvatar" class="user-avatar" src="https://picsum.photos/id/64/100/100">
+            <div class="user-meta">
+                <div class="user-name" id="sidebarName">加载中</div>
+                <div class="user-role" id="sidebarRole">--</div>
+            </div>
+        </div>
+        <button class="logout-btn" onclick="logout()">🚪 退出登录</button>
+    </div>
+</div>
+
+<!-- 主内容 -->
+<div class="main-wrap">
+    <div class="topbar">
+        <div class="topbar-title" id="topbarTitle">图片识别</div>
+        <div class="topbar-meta">
+            <div class="status-dot">
+                <div class="dot"></div>
+                <span id="modelStatus">系统就绪</span>
+            </div>
+            <div style="font-size:12px;color:var(--muted);font-family:'Space Mono',monospace;" id="topbarTime"></div>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <!-- ══ 识别页 ══ -->
+        <div id="page-recognition">
+            <div class="recog-grid">
+                <div>
+                    <div class="drop-zone" id="dropZone"
+                        onclick="document.getElementById('fileInput').click()"
+                        ondragover="onDragOver(event)"
+                        ondragleave="onDragLeave(event)"
+                        ondrop="onDrop(event)">
+                        <div class="dz-icon">🖼️</div>
+                        <div class="dz-text">点击上传或拖拽图片到此处</div>
+                        <div class="dz-sub">支持 JPG · PNG · GIF · WEBP · 最大 10MB</div>
+                        <video id="preview-video" style="display:none;" autoplay playsinline muted></video>
+                        <img id="preview-img" style="display:none;">
+                    </div>
+                    <input type="file" id="fileInput" accept="image/*" style="display:none;">
+                </div>
+
+                <div class="action-panel">
+                    <div class="card" style="padding:18px;">
+                        <div class="card-title"><span class="ct-icon">🎮</span>操作面板</div>
+                        <div style="display:flex;flex-direction:column;gap:8px;">
+                            <button class="btn" onclick="startCamera()">📷 开启摄像头</button>
+                            <button class="btn" onclick="captureCamera()">🎯 摄像头拍照</button>
+                            <button class="btn" onclick="stopCamera()">❌ 关闭摄像头</button>
+                            <div style="height:1px;background:var(--border);margin:4px 0;"></div>
+                            <button class="btn btn-accent" id="recognizeBtn" onclick="doRecognize()">
+                                🔍 开始识别
+                            </button>
+                            <button class="btn btn-danger" onclick="clearPreview()">🗑️ 清空</button>
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding:18px;">
+                        <div class="card-title"><span class="ct-icon">✨</span>识别结果</div>
+                        <div class="result-display">
+                            <div class="result-main" id="resultName">--</div>
+                            <div class="result-sub" id="resultSub">等待识别…</div>
+                            <div class="conf-bar-wrap">
+                                <div class="conf-bar" id="confBar"></div>
+                            </div>
+                            <div id="top3List" class="top3-list"></div>
+                            <div class="meta-row" id="metaRow"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ 历史记录 ══ -->
+        <div id="page-history" style="display:none;">
+            <div class="history-toolbar">
+                <input class="search-input" id="histSearch" placeholder="🔍 搜索商品名" oninput="onHistSearch()">
+                <input class="search-input" type="date" id="histDate" onchange="loadHistory(1)" style="width:150px;">
+                <div style="margin-left:auto;display:flex;gap:8px;">
+                    <button class="btn" style="width:auto;padding:8px 14px;" onclick="exportCSV()">📊 导出 CSV</button>
+                    <button class="btn btn-danger" style="width:auto;padding:8px 14px;" onclick="clearAllHistory()">🗑️ 清空记录</button>
+                </div>
+            </div>
+            <div class="card" style="padding:0;overflow:hidden;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>文件名</th>
+                            <th>识别结果</th>
+                            <th>置信度</th>
+                            <th>识别人</th>
+                            <th>时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="histTable"></tbody>
+                </table>
+                <div id="histEmpty" style="display:none;" class="empty-state">
+                    <div class="es-icon">📭</div>
+                    <p>暂无记录</p>
+                </div>
+            </div>
+            <div class="pagination" id="histPagination"></div>
+        </div>
+
+        <!-- ══ 数据统计 ══ -->
+        <div id="page-stats" style="display:none;">
+            <div class="stats-grid">
+                <div class="stat-card green">
+                    <div class="stat-icon">📦</div>
+                    <div class="stat-num" id="sc-total">--</div>
+                    <div class="stat-label">累计识别次数</div>
+                </div>
+                <div class="stat-card blue">
+                    <div class="stat-icon">🌅</div>
+                    <div class="stat-num" id="sc-today">--</div>
+                    <div class="stat-label">今日识别</div>
+                </div>
+                <div class="stat-card pink">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-num" id="sc-top">--</div>
+                    <div class="stat-label">最多识别商品</div>
+                </div>
+                <div class="stat-card yellow">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-num" id="sc-cat">--</div>
+                    <div class="stat-label">商品类别数</div>
+                </div>
+            </div>
+            <div class="charts-grid">
+                <div class="chart-wrap">
+                    <div class="card-title"><span class="ct-icon">🥧</span>类别分布</div>
+                    <div class="chart-inner"><canvas id="pieChart"></canvas></div>
+                </div>
+                <div class="chart-wrap">
+                    <div class="card-title"><span class="ct-icon">📈</span>每日趋势（近30天）</div>
+                    <div class="chart-inner"><canvas id="lineChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ 公告管理 ══ -->
+        <div id="page-notice" style="display:none;">
+            <div id="latestNotice" class="notice-card" style="display:none;">
+                <div class="notice-title" id="noticeTitle">--</div>
+                <div class="notice-content" id="noticeContent">--</div>
+                <div class="notice-meta">
+                    <span id="noticeAuthor"></span>
+                    <span id="noticeTime"></span>
+                </div>
+            </div>
+
+            <!-- 管理员发布区 -->
+            <div id="noticeEditor" class="card" style="display:none;margin-bottom:20px;">
+                <div class="card-title"><span class="ct-icon">✏️</span>发布新公告</div>
+                <div class="form-group">
+                    <label class="form-label">标题</label>
+                    <input class="form-input" id="noticeNewTitle" placeholder="公告标题">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">内容</label>
+                    <textarea class="form-input" id="noticeNewContent" placeholder="公告正文…"></textarea>
+                </div>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn btn-accent" style="width:auto;padding:9px 20px;" onclick="publishNotice()">发布</button>
+                    <button class="btn btn-danger" style="width:auto;padding:9px 20px;" onclick="clearAllNotices()">清空全部</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title"><span class="ct-icon">📋</span>历史公告</div>
+                <div id="noticeList"></div>
+            </div>
+        </div>
+
+        <!-- ══ 系统管理 ══ -->
+        <div id="page-system" style="display:none;">
+            <div class="mgmt-grid">
+                <div style="display:flex;flex-direction:column;gap:16px;">
+                    <!-- 个人信息 -->
+                    <div class="card">
+                        <div class="card-title"><span class="ct-icon">👤</span>我的账号</div>
+                        <div style="text-align:center;margin-bottom:16px;">
+                            <label style="cursor:pointer;">
+                                <img id="myAvatar" src="https://picsum.photos/id/64/100/100"
+                                    style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--border2);">
+                                <input type="file" id="avatarInput" accept="image/*" style="display:none;" onchange="changeMyAvatar()">
+                            </label>
+                            <div style="font-weight:600;margin-top:10px;" id="myName">--</div>
+                            <div style="font-size:12px;color:var(--accent);font-family:'Space Mono',monospace;" id="myRole">--</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">原密码</label>
+                            <input class="form-input" type="password" id="oldPwd" placeholder="输入原密码">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">新密码（至少6位）</label>
+                            <input class="form-input" type="password" id="newPwd" placeholder="输入新密码">
+                        </div>
+                        <button class="btn btn-accent" onclick="changeMyPwd()">确认修改</button>
+                    </div>
+
+                    <!-- 系统状态 -->
+                    <div class="card">
+                        <div class="card-title"><span class="ct-icon">🖥️</span>系统状态</div>
+                        <div id="sysStatusList" style="font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:8px;font-family:'Space Mono',monospace;"></div>
+                    </div>
+                </div>
+
+                <div style="display:flex;flex-direction:column;gap:16px;">
+                    <!-- 用户列表（仅管理员） -->
+                    <div class="card" id="userManageCard" style="display:none;">
+                        <div class="card-title" style="justify-content:space-between;">
+                            <span><span class="ct-icon">👥</span>用户管理</span>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <input class="search-input" id="userSearch" placeholder="搜索用户" oninput="loadUsers(1)" style="width:150px;padding:6px 12px;">
+                            </div>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>头像</th><th>ID</th><th>账号</th><th>最后登录</th><th>状态</th><th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userTableBody"></tbody>
+                        </table>
+                        <div class="pagination" id="userPagination"></div>
+                    </div>
+
+                    <!-- 添加管理员 -->
+                    <div class="card" id="addAdminCard" style="display:none;">
+                        <div class="card-title"><span class="ct-icon">➕</span>添加管理员</div>
+                        <div class="form-group">
+                            <label class="form-label">账号</label>
+                            <input class="form-input" id="newAdminUser" placeholder="新管理员账号">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">密码</label>
+                            <input class="form-input" type="password" id="newAdminPwd" placeholder="初始密码（≥6位）">
+                        </div>
+                        <button class="btn btn-accent" onclick="addAdmin()">添加管理员</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /content -->
+</div><!-- /main-wrap -->
+
+<!-- 图片预览弹窗 -->
+<div class="modal-overlay" id="imgModal" onclick="this.classList.remove('show')">
+    <img id="modalImg" src="">
+</div>
+
+<!-- Toast 容器 -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<canvas id="captureCanvas" style="display:none;"></canvas>
+
+<script>
+const API = "http://127.0.0.1:8000";
+let currentFile = null;
+let cameraStream = null;
+let histPage = 1;
+let histSearchTimer = null;
+let pieChartInst = null;
+let lineChartInst = null;
+
+// ── Auth 工具 ──
+function getToken() { return localStorage.getItem("token") || ""; }
+function authHeaders() {
+    return { "Authorization": "Bearer " + getToken() };
+}
+
+function authFetch(url, opts = {}) {
+    return fetch(API + url, {
+        ...opts,
+        headers: { ...authHeaders(), ...(opts.headers || {}) }
+    });
+}
+
+// ── 初始化 ──
+window.onload = function () {
+    if (!localStorage.getItem("login")) { location.href = "login.html"; return; }
+    initUser();
+    loadSysStatus();
+    updateClock();
+    setInterval(updateClock, 1000);
+    goTo('recognition');
+};
+
+function updateClock() {
+    const now = new Date();
+    document.getElementById("topbarTime").textContent =
+        now.toLocaleDateString('zh-CN') + " " + now.toLocaleTimeString('zh-CN');
+}
+
+function initUser() {
+    const username = localStorage.getItem("username") || "--";
+    const role = localStorage.getItem("role") || "user";
+    document.getElementById("sidebarName").textContent = username;
+    document.getElementById("sidebarRole").textContent = role === "admin" ? "ADMIN" : "USER";
+    document.getElementById("myName").textContent = username;
+    document.getElementById("myRole").textContent = role === "admin" ? "管理员" : "普通用户";
+    const avatar = localStorage.getItem("userAvatar_" + username) || "https://picsum.photos/id/64/100/100";
+    document.getElementById("sidebarAvatar").src = avatar;
+    document.getElementById("myAvatar").src = avatar;
+    if (role === "admin") {
+        document.getElementById("userManageCard").style.display = "block";
+        document.getElementById("addAdminCard").style.display = "block";
+    }
+}
+
+// ── 导航 ──
+const titles = { recognition: "图片识别", history: "识别历史", stats: "数据统计", notice: "系统公告", system: "系统管理" };
+function goTo(page) {
+    ["recognition","history","stats","notice","system"].forEach(p => {
+        document.getElementById("page-" + p).style.display = "none";
+        document.getElementById("nav-" + p).classList.remove("active");
+    });
+    document.getElementById("page-" + page).style.display = "block";
+    document.getElementById("nav-" + page).classList.add("active");
+    document.getElementById("topbarTitle").textContent = titles[page] || page;
+    if (page === "history") loadHistory(1);
+    if (page === "stats")   loadStats();
+    if (page === "notice")  loadNotice();
+    if (page === "system")  loadUsers(1);
+}
+
+// ── Toast ──
+function toast(msg, type = "ok", duration = 3000) {
+    const wrap = document.getElementById("toastWrap");
+    const el = document.createElement("div");
+    el.className = "toast " + type;
+    el.textContent = (type === "ok" ? "✅ " : "❌ ") + msg;
+    wrap.appendChild(el);
+    setTimeout(() => { el.style.opacity = "0"; el.style.transition = "opacity 0.3s"; setTimeout(() => el.remove(), 300); }, duration);
+}
+
+// ── 图片识别 ──
+document.getElementById("fileInput").addEventListener("change", function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    loadImageFile(file);
+});
+function onDragOver(e) { e.preventDefault(); document.getElementById("dropZone").classList.add("drag-over"); }
+function onDragLeave(e) { document.getElementById("dropZone").classList.remove("drag-over"); }
+function onDrop(e) {
+    e.preventDefault();
+    document.getElementById("dropZone").classList.remove("drag-over");
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith("image/")) loadImageFile(file);
+}
+function loadImageFile(file) {
+    currentFile = file;
+    stopCamera();
+    const img = document.getElementById("preview-img");
+    img.src = URL.createObjectURL(file);
+    img.style.display = "block";
+    document.getElementById("preview-video").style.display = "none";
+    clearResult();
+}
+
+async function startCamera() {
+    try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const video = document.getElementById("preview-video");
+        video.srcObject = cameraStream;
+        video.style.display = "block";
+        document.getElementById("preview-img").style.display = "none";
+        currentFile = null;
+    } catch { toast("无法访问摄像头，请检查权限", "err"); }
+}
+function stopCamera() {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(t => t.stop());
+        cameraStream = null;
+        document.getElementById("preview-video").style.display = "none";
+    }
+}
+function captureCamera() {
+    const video = document.getElementById("preview-video");
+    if (!video.srcObject) { toast("请先开启摄像头", "err"); return; }
+    const canvas = document.getElementById("captureCanvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext("2d").drawImage(video, 0, 0);
+    canvas.toBlob(blob => {
+        currentFile = new File([blob], "camera_" + Date.now() + ".jpg", { type: "image/jpeg" });
+        const img = document.getElementById("preview-img");
+        img.src = URL.createObjectURL(blob);
+        img.style.display = "block";
+        video.style.display = "none";
+        stopCamera();
+    });
+}
+function clearPreview() {
+    currentFile = null;
+    stopCamera();
+    document.getElementById("preview-img").src = "";
+    document.getElementById("preview-img").style.display = "none";
+    document.getElementById("fileInput").value = "";
+    clearResult();
+}
+function clearResult() {
+    document.getElementById("resultName").textContent = "--";
+    document.getElementById("resultSub").textContent = "等待识别…";
+    document.getElementById("confBar").style.width = "0%";
+    document.getElementById("top3List").innerHTML = "";
+    document.getElementById("metaRow").innerHTML = "";
+}
+
+async function doRecognize() {
+    if (!currentFile) { toast("请先选择图片或拍照", "err"); return; }
+    const btn = document.getElementById("recognizeBtn");
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> 识别中…';
+    clearResult();
+    try {
+        const fd = new FormData();
+        fd.append("file", currentFile, currentFile.name);
+        const res = await fetch(API + "/predict", {
+            method: "POST",
+            headers: { "Authorization": "Bearer " + getToken() },
+            body: fd
+        });
+        const data = await res.json();
+        if (data.code === 200) {
+            const d = data.data;
+            document.getElementById("resultName").textContent = d.result;
+            document.getElementById("resultSub").textContent = `置信度 ${(d.confidence * 100).toFixed(1)}%`;
+            document.getElementById("confBar").style.width = (d.confidence * 100) + "%";
+            // Top3
+            const colors = ["var(--accent)", "var(--accent2)", "var(--accent3)"];
+            document.getElementById("top3List").innerHTML = (d.top3 || []).map((item, i) =>
+                `<div class="top3-item">
+                    <span style="width:60px;color:var(--text);">${item.name}</span>
+                    <div class="top3-bar-wrap"><div class="top3-bar" style="width:${(item.confidence*100).toFixed(0)}%;background:${colors[i]||'var(--muted)'}"></div></div>
+                    <span>${(item.confidence*100).toFixed(1)}%</span>
+                </div>`
+            ).join("");
+            document.getElementById("metaRow").innerHTML =
+                `<span class="meta-chip">⏱ ${d.time} ms</span><span class="meta-chip">📁 ${d.filename}</span>`;
+            toast("识别完成: " + d.result, "ok");
+        } else {
+            toast(data.msg || "识别失败", "err");
+        }
+    } catch (e) {
+        toast("后端连接失败，请确认服务已启动", "err");
+    }
+    btn.disabled = false;
+    btn.innerHTML = '🔍 开始识别';
+}
+
+// ── 历史记录 ──
+function onHistSearch() {
+    clearTimeout(histSearchTimer);
+    histSearchTimer = setTimeout(() => loadHistory(1), 400);
+}
+async function loadHistory(page = 1) {
+    histPage = page;
+    const kw = document.getElementById("histSearch").value.trim();
+    const dt = document.getElementById("histDate").value;
+    let url = `/history?page=${page}&page_size=15`;
+    if (kw) url += "&keyword=" + encodeURIComponent(kw);
+    if (dt) url += "&date=" + dt;
+    const res = await authFetch(url);
+    const data = await res.json();
+    if (data.code !== 200) return;
+    const { list, total, page_size } = data.data;
+    const tbody = document.getElementById("histTable");
+    const empty = document.getElementById("histEmpty");
+    if (list.length === 0) { tbody.innerHTML = ""; empty.style.display = "block"; }
+    else {
+        empty.style.display = "none";
+        tbody.innerHTML = list.map(item => {
+            const conf = (item.confidence * 100).toFixed(1);
+            return `<tr>
+                <td style="font-size:12px;color:var(--muted);font-family:'Space Mono',monospace;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${item.filename}">${item.filename}</td>
+                <td><span class="tag tag-green">${item.result}</span></td>
+                <td>
+                    <div class="conf-inline">
+                        <div class="bar"><div class="bar-fill" style="width:${conf}%"></div></div>
+                        <span style="font-family:'Space Mono',monospace;font-size:12px;">${conf}%</span>
+                    </div>
+                </td>
+                <td style="font-size:12px;color:var(--muted);">${item.created_by}</td>
+                <td style="font-size:12px;color:var(--muted);font-family:'Space Mono',monospace;">${item.time}</td>
+                <td>
+                    <div style="display:flex;gap:6px;">
+                        <button class="icon-btn" onclick="openPreview('${item.filename}')">👁</button>
+                        <button class="icon-btn red" onclick="delRecord(${item.id})">🗑</button>
+                    </div>
+                </td>
+            </tr>`;
+        }).join("");
+    }
+    // 分页
+    const pages = Math.ceil(total / page_size);
+    let phtml = `<span class="page-info">共 ${total} 条</span>`;
+    if (pages > 1) {
+        if (page > 1) phtml += `<button class="page-btn" onclick="loadHistory(${page-1})">上一页</button>`;
+        for (let i = Math.max(1, page-2); i <= Math.min(pages, page+2); i++) {
+            phtml += `<button class="page-btn${i===page?' active':''}" onclick="loadHistory(${i})">${i}</button>`;
+        }
+        if (page < pages) phtml += `<button class="page-btn" onclick="loadHistory(${page+1})">下一页</button>`;
+    }
+    document.getElementById("histPagination").innerHTML = phtml;
+}
+
+async function delRecord(id) {
+    if (!confirm("确定删除这条记录？")) return;
+    const res = await authFetch("/history/" + id, { method: "DELETE" });
+    const data = await res.json();
+    if (data.code === 200) { toast("删除成功"); loadHistory(histPage); }
+    else toast(data.msg || "删除失败", "err");
+}
+
+async function clearAllHistory() {
+    if (!confirm("⚠️ 确定清空全部记录？不可恢复！")) return;
+    const res = await authFetch("/clear", { method: "POST" });
+    const data = await res.json();
+    toast(data.msg || "已清空", data.code === 200 ? "ok" : "err");
+    loadHistory(1);
+}
+
+async function exportCSV() {
+    try {
+        toast("导出中，请稍候…", "ok", 8000);
+
+        // 先取第一页获得total
+        const firstRes = await authFetch("/history?page=1&page_size=100");
+        if (!firstRes.ok) { toast(`请求失败: HTTP ${firstRes.status}`, "err"); return; }
+
+        const firstData = await firstRes.json();
+        if (firstData.code !== 200) { toast("获取数据失败: " + firstData.msg, "err"); return; }
+
+        const total = firstData.data.total;
+        const pageSize = 100;
+        const pages = Math.ceil(total / pageSize);
+
+        // 并发拉取所有页
+        const requests = [];
+        for (let p = 2; p <= pages; p++) {
+            requests.push(authFetch(`/history?page=${p}&page_size=${pageSize}`).then(r => r.json()));
+        }
+        const restResults = await Promise.all(requests);
+        const list = [
+            ...(firstData.data.list ?? []),
+            ...restResults.flatMap(d => d?.data?.list ?? [])
+        ];
+
+        if (list.length === 0) { toast("暂无记录可导出", "err"); return; }
+
+        const esc = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+        let csv = "\uFEFF文件名,识别结果,置信度,识别人,时间\n";
+        list.forEach(r => {
+            csv += [
+                esc(r.filename), esc(r.result),
+                esc((r.confidence * 100).toFixed(2) + "%"),
+                esc(r.created_by), esc(r.time)
+            ].join(",") + "\n";
+        });
+
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "商品识别记录_" + new Date().toISOString().slice(0, 10) + ".csv";
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+
+        toast(`导出成功，共 ${list.length} 条`);
+
+    } catch(e) {
+        console.error(e);
+        toast("导出失败: " + e.message, "err");
+    }
+}
+
+// ── 数据统计 ──
+async function loadStats() {
+    const res = await authFetch("/stats");
+    const data = await res.json();
+    if (data.code !== 200) return;
+    const d = data.data;
+    document.getElementById("sc-total").textContent = d.total;
+    document.getElementById("sc-today").textContent = d.today;
+    const top = d.category_dist.sort((a,b)=>b.count-a.count)[0];
+    document.getElementById("sc-top").textContent = top ? top.name : "--";
+    document.getElementById("sc-cat").textContent = d.category_dist.length;
+
+    if (pieChartInst) pieChartInst.destroy();
+    if (lineChartInst) lineChartInst.destroy();
+
+    const pieCtx = document.getElementById("pieChart").getContext("2d");
+    pieChartInst = new Chart(pieCtx, {
+        type: "doughnut",
+        data: {
+            labels: d.category_dist.map(x => x.name),
+            datasets: [{
+                data: d.category_dist.map(x => x.count),
+                backgroundColor: ["#4ade80","#22d3ee","#f472b6","#fbbf24","#818cf8","#fb7185"],
+                borderWidth: 0,
+                hoverOffset: 6
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: "bottom", labels: { color: "#6b7280", font: { size: 12 } } } }
+        }
+    });
+
+    const lineCtx = document.getElementById("lineChart").getContext("2d");
+    lineChartInst = new Chart(lineCtx, {
+        type: "line",
+        data: {
+            labels: d.daily_trend.map(x => x.date.slice(5)),
+            datasets: [{
+                label: "识别次数",
+                data: d.daily_trend.map(x => x.count),
+                borderColor: "#4ade80",
+                backgroundColor: "rgba(74,222,128,0.08)",
+                tension: 0.4, fill: true, pointRadius: 4,
+                pointBackgroundColor: "#4ade80"
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: "#6b7280", font:{size:11} }, grid: { color: "rgba(255,255,255,0.04)" } },
+                y: { ticks: { color: "#6b7280", font:{size:11} }, grid: { color: "rgba(255,255,255,0.04)" }, beginAtZero: true }
+            }
+        }
+    });
+}
+
+// ── 公告 ──
+async function loadNotice() {
+    const role = localStorage.getItem("role");
+    if (role === "admin") document.getElementById("noticeEditor").style.display = "block";
+
+    const r1 = await fetch(API + "/notice");
+    const d1 = await r1.json();
+    if (d1.code === 200 && d1.data.content !== "暂无公告") {
+        document.getElementById("latestNotice").style.display = "block";
+        document.getElementById("noticeTitle").textContent = d1.data.title;
+        document.getElementById("noticeContent").textContent = d1.data.content;
+        document.getElementById("noticeAuthor").textContent = "发布人: " + d1.data.author;
+        document.getElementById("noticeTime").textContent = d1.data.time;
+    }
+
+    const r2 = await fetch(API + "/notice_list?page=1&page_size=20");
+    const d2 = await r2.json();
+    if (d2.code !== 200) return;
+    const list = d2.data.list;
+    if (list.length === 0) {
+        document.getElementById("noticeList").innerHTML = '<div class="empty-state"><div class="es-icon">📭</div><p>暂无公告</p></div>';
+        return;
+    }
+    document.getElementById("noticeList").innerHTML = list.map(item => `
+        <div class="notice-card" style="margin-bottom:12px;">
+            <div class="notice-title">${item.title}</div>
+            <div class="notice-content">${item.content}</div>
+            <div class="notice-meta" style="justify-content:space-between;">
+                <span>✍️ ${item.author} · ${item.time}</span>
+                ${role === "admin" ? `<button class="icon-btn red" onclick="delNotice(${item.id})">删除</button>` : ""}
+            </div>
+        </div>`).join("");
+}
+
+// 修复后：用 authFetch，自动带 Authorization
+async function publishNotice() {
+  const title = document.getElementById("noticeNewTitle").value.trim();
+  const content = document.getElementById("noticeNewContent").value.trim();
+  if (!title || !content) { toast("请填写完整内容", "err"); return; }
+
+  // ✅ 改用 authFetch（自动带Bearer Token）
+  const res = await authFetch("/save_notice", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" }, // 必须加，否则后端解析失败
+    body: JSON.stringify({ title, content })
+  });
+
+  const data = await res.json();
+  if (data.code === 200) {
+    toast("发布成功");
+    document.getElementById("noticeNewTitle").value = "";
+    document.getElementById("noticeNewContent").value = "";
+    loadNotice();
+  } else {
+    toast(data.msg || "发布失败", "err");
+  }
+}
+async function delNotice(id) {
+    if (!confirm("确定删除这条公告？")) return;
+    const res = await authFetch("/delete_notice_by_id?id=" + id, { method: "POST" });
+    const data = await res.json();
+    toast(data.msg, data.code === 200 ? "ok" : "err");
+    loadNotice();
+}
+async function clearAllNotices() {
+    if (!confirm("确定清空全部公告？")) return;
+    const res = await authFetch("/clear_all_notices", { method: "POST" });
+    const data = await res.json();
+    toast(data.msg, data.code === 200 ? "ok" : "err");
+    loadNotice();
+}
+
+// ── 用户管理 ──
+async function loadUsers(page = 1) {
+    if (localStorage.getItem("role") !== "admin") return;
+    const kw = document.getElementById("userSearch")?.value.trim() || "";
+    const res = await authFetch(`/users?page=${page}&page_size=10${kw ? "&keyword=" + encodeURIComponent(kw) : ""}`);
+    const data = await res.json();
+    if (data.code !== 200) return;
+    const { list, total, page_size } = data.data;
+    document.getElementById("userTableBody").innerHTML = list.map(u => {
+        const av = localStorage.getItem("userAvatar_" + u.username) || "https://picsum.photos/id/64/100/100";
+        return `<tr>
+            <td><img src="${av}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;"></td>
+            <td style="font-family:'Space Mono',monospace;color:var(--muted);font-size:12px;">#${u.id}</td>
+            <td style="font-weight:500;">${u.username}</td>
+            <td style="font-size:12px;color:var(--muted);font-family:'Space Mono',monospace;">${u.last_login}</td>
+            <td><span class="tag ${u.is_active ? 'tag-green' : 'tag-pink'}">${u.is_active ? '正常' : '禁用'}</span></td>
+            <td>
+                <div style="display:flex;gap:6px;">
+                    <button class="icon-btn" onclick="toggleUser(${u.id})">${u.is_active ? '禁用' : '启用'}</button>
+                    <button class="icon-btn red" onclick="delUser(${u.id})">删除</button>
+                </div>
+            </td>
+        </tr>`;
+    }).join("");
+
+    const pages = Math.ceil(total / page_size);
+    let phtml = `<span class="page-info">共 ${total} 用户</span>`;
+    for (let i = 1; i <= pages; i++) {
+        phtml += `<button class="page-btn${i===page?' active':''}" onclick="loadUsers(${i})">${i}</button>`;
+    }
+    document.getElementById("userPagination").innerHTML = phtml;
+}
+
+async function toggleUser(id) {
+    const res = await authFetch("/toggle_user?id=" + id, { method: "POST" });
+    const data = await res.json();
+    toast(data.msg, data.code === 200 ? "ok" : "err");
+    loadUsers(1);
+}
+
+async function delUser(id) {
+    if (!confirm("确定删除该用户？")) return;
+    const res = await authFetch("/delete_user?id=" + id, { method: "POST" });
+    const data = await res.json();
+    toast(data.msg, data.code === 200 ? "ok" : "err");
+    loadUsers(1);
+}
+
+async function addAdmin() {
+    const username = document.getElementById("newAdminUser").value.trim();
+    const password = document.getElementById("newAdminPwd").value;
+    if (!username || !password) { toast("请填写完整", "err"); return; }
+    const res = await authFetch("/add-admin", { method: "POST", body: JSON.stringify({ username, password }) });
+    const data = await res.json();
+    toast(data.msg, data.code === 200 ? "ok" : "err");
+    if (data.code === 200) { document.getElementById("newAdminUser").value = ""; document.getElementById("newAdminPwd").value = ""; }
+}
+
+// ── 修改密码 ──
+async function changeMyPwd() {
+    const username = localStorage.getItem("username");
+    const old_pwd = document.getElementById("oldPwd").value;
+    const new_pwd = document.getElementById("newPwd").value;
+    if (!old_pwd || !new_pwd) { toast("请填写完整", "err"); return; }
+    if (new_pwd.length < 6) { toast("新密码至少6位", "err"); return; }
+    const res = await authFetch("/change-password", { method: "POST", body: JSON.stringify({ username, old_pwd, new_pwd }) });
+    const data = await res.json();
+    toast(data.msg, data.code === 200 ? "ok" : "err");
+    if (data.code === 200) { document.getElementById("oldPwd").value = ""; document.getElementById("newPwd").value = ""; }
+}
+
+// ── 头像 ──
+function changeMyAvatar() {
+    const file = document.getElementById("avatarInput").files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        const b64 = e.target.result;
+        const user = localStorage.getItem("username");
+        localStorage.setItem("userAvatar_" + user, b64);
+        document.getElementById("myAvatar").src = b64;
+        document.getElementById("sidebarAvatar").src = b64;
+    };
+    reader.readAsDataURL(file);
+}
+
+// ── 系统状态 ──
+async function loadSysStatus() {
+    try {
+        const res = await fetch(API + "/status");
+        const data = await res.json();
+        if (data.code !== 200) return;
+        const d = data.data;
+        document.getElementById("modelStatus").textContent = d.model_loaded ? "模型已加载" : "Mock 模式";
+        document.getElementById("sysStatusList").innerHTML = [
+            ["版本", d.version],
+            ["运行设备", d.device],
+            ["分类数量", d.class_count],
+            ["用户总数", d.user_count],
+            ["识别总数", d.record_count],
+            ["模型状态", d.model_loaded ? "✅ 已加载" : "⚠️ Mock"]
+        ].map(([k, v]) => `<div style="display:flex;justify-content:space-between;"><span>${k}</span><span style="color:var(--text);">${v}</span></div>`).join("");
+    } catch {}
+}
+
+// ── 图片预览 ──
+function openPreview(filename) {
+    document.getElementById("modalImg").src = API + "/uploads/" + filename;
+    document.getElementById("imgModal").classList.add("show");
+}
+
+// ── 退出 ──
+function logout() {
+    if (!confirm("确定退出登录？")) return;
+    localStorage.clear();
+    location.href = "login.html";
+}
+</script>
+</body>
+</html>

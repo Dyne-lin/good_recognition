@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>商品识别系统 · 登录</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #0d0f14;
+    --surface: #161921;
+    --border: rgba(255,255,255,0.07);
+    --accent: #4ade80;
+    --accent2: #22d3ee;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --error: #f87171;
+    --success: #4ade80;
+    --input-bg: #1e2130;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    min-height: 100vh;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Noto Sans SC', sans-serif;
+    color: var(--text);
+    overflow: hidden;
+}
+
+/* 背景网格动画 */
+.bg-grid {
+    position: fixed;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(74,222,128,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(74,222,128,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    z-index: 0;
+}
+
+.bg-glow {
+    position: fixed;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+}
+.glow-1 {
+    background: rgba(74,222,128,0.08);
+    top: -200px; left: -200px;
+    animation: drift1 12s ease-in-out infinite alternate;
+}
+.glow-2 {
+    background: rgba(34,211,238,0.06);
+    bottom: -200px; right: -200px;
+    animation: drift2 15s ease-in-out infinite alternate;
+}
+@keyframes drift1 { to { transform: translate(100px, 80px); } }
+@keyframes drift2 { to { transform: translate(-80px, -60px); } }
+
+.card {
+    position: relative;
+    z-index: 1;
+    width: 420px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px 44px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03);
+    animation: slideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(32px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 36px;
+}
+.logo-icon {
+    width: 48px; height: 48px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 8px 20px rgba(74,222,128,0.25);
+}
+.logo-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    line-height: 1.5;
+}
+.logo-text strong {
+    display: block;
+    color: var(--text);
+    font-size: 15px;
+    letter-spacing: 0.02em;
+}
+
+/* Tab 切换 */
+.tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--input-bg);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 28px;
+}
+.tab-btn {
+    flex: 1;
+    padding: 9px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.tab-btn.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.form-group {
+    margin-bottom: 16px;
+    animation: fadeIn 0.3s ease both;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.form-label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.input-wrap {
+    position: relative;
+}
+.input-wrap .icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    pointer-events: none;
+}
+.form-input {
+    width: 100%;
+    padding: 13px 14px 13px 42px;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(74,222,128,0.12);
+}
+.form-input::placeholder { color: #3d4452; }
+
+/* 头像区 */
+.avatar-group {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.avatar-wrap-outer {
+    position: relative;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.avatar-wrap-outer img {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border);
+    transition: border-color 0.2s;
+}
+.avatar-wrap-outer:hover img { border-color: var(--accent); }
+.avatar-badge {
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 18px; height: 18px;
+    background: var(--accent);
+    border-radius: 50%;
+    border: 2px solid var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+}
+#avatarInput { display: none; }
+.avatar-hint { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.avatar-hint strong { color: var(--text); display: block; font-size: 14px; margin-bottom: 2px; }
+
+.btn-primary {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--accent), #22c55e);
+    border: none;
+    border-radius: 10px;
+    color: #0a1a0a;
+    font-family: 'Noto Sans SC', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    letter-spacing: 0.05em;
+    box-shadow: 0 4px 16px rgba(74,222,128,0.25);
+}
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(74,222,128,0.35);
+}
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.msg-area {
+    min-height: 20px;
+    text-align: center;
+    font-size: 13px;
+    margin-top: 14px;
+    transition: all 0.3s;
+}
+.msg-area.err { color: var(--error); }
+.msg-area.ok { color: var(--success); }
+
+.footer-tip {
+    text-align: center;
+    font-size: 12px;
+    color: #2d3347;
+    margin-top: 28px;
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+    font-family: 'Space Mono', monospace;
+}
+
+/* 加载动画 */
+.spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(0,0,0,0.2);
+    border-top-color: #0a1a0a;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow glow-1"></div>
+<div class="bg-glow glow-2"></div>
+
+<div class="card">
+    <div class="logo-area">
+        <div class="logo-icon">🔍</div>
+        <div class="logo-text">
+            <strong>商品识别系统</strong>
+            GOODS RECOGNITION v2.0
+        </div>
+    </div>
+
+    <!-- 头像区 -->
+    <div class="avatar-group">
+        <div class="avatar-wrap-outer" onclick="document.getElementById('avatarInput').click()">
+            <img id="avatarPreview" src="https://picsum.photos/id/64/100/100" alt="头像">
+            <div class="avatar-badge">✏️</div>
+        </div>
+        <div class="avatar-hint">
+            <strong id="hintName">欢迎回来</strong>
+            点击头像可自定义，账号独立保存
+        </div>
+        <input type="file" id="avatarInput" accept="image/*">
+    </div>
+
+    <!-- Tab -->
+    <div class="tabs">
+        <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">登 录</button>
+        <button class="tab-btn" id="tab-register" onclick="switchTab('register')">注 册</button>
+    </div>
+
+    <!-- 登录表单 -->
+    <div id="form-login">
+        <div class="form-group">
+            <label class="form-label">账号</label>
+            <div class="input-wrap">
+                <span class="icon">👤</span>
+                <input id="login-username" class="form-input" placeholder="输入账号" autocomplete="username">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">密码</label>
+            <div class="input-wrap">
+                <span class="icon">🔒</span>
+                <input id="login-password" class="form-input" type="password" placeholder="输入密码" autocomplete="current-password">
+            </div>
+        </div>
+        <button class="btn-primary" id="loginBtn" onclick="doLogin()">
+            <span>登 录</span>
+        </button>
+    </div>
+
+    <!-- 注册表单 -->
+    <div id="form-register" style="display:none;">
+        <div class="form-group">
+            <label class="form-label">账号 <span style="color:#4d5566;font-size:11px;">（2-50位，字母/数字/中文/下划线）</span></label>
+            <div class="input-wrap">
+                <span class="icon">👤</span>
+                <input id="reg-username" class="form-input" placeholder="设置账号" autocomplete="username">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">密码 <span style="color:#4d5566;font-size:11px;">（至少6位）</span></label>
+            <div class="input-wrap">
+                <span class="icon">🔒</span>
+                <input id="reg-password" class="form-input" type="password" placeholder="设置密码" autocomplete="new-password">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">确认密码</label>
+            <div class="input-wrap">
+                <span class="icon">✅</span>
+                <input id="reg-confirm" class="form-input" type="password" placeholder="再次输入密码" autocomplete="new-password">
+            </div>
+        </div>
+        <button class="btn-primary" id="registerBtn" onclick="doRegister()">
+            <span>注 册</span>
+        </button>
+    </div>
+
+    <div class="msg-area" id="msgArea"></div>
+
+    <div class="footer-tip">POWERED BY DEEP LEARNING · JWT AUTH</div>
+</div>
+
+<script>
+const API = "http://127.0.0.1:8000";
+
+// ── 初始化 ──
+window.onload = function () {
+    const lastUser = localStorage.getItem("LAST_LOGIN_USER");
+    if (lastUser) {
+        document.getElementById("login-username").value = lastUser;
+        document.getElementById("hintName").textContent = lastUser;
+        loadAvatar(lastUser);
+    }
+    // 回车提交
+    document.addEventListener("keydown", e => {
+        if (e.key === "Enter") {
+            const tab = document.getElementById("tab-login").classList.contains("active") ? "login" : "register";
+            tab === "login" ? doLogin() : doRegister();
+        }
+    });
+    // 实时加载头像
+    document.getElementById("login-username").addEventListener("input", function () {
+        const u = this.value.trim();
+        document.getElementById("hintName").textContent = u || "欢迎回来";
+        if (u) loadAvatar(u);
+    });
+};
+
+// ── Tab 切换 ──
+function switchTab(t) {
+    document.getElementById("form-login").style.display = t === "login" ? "block" : "none";
+    document.getElementById("form-register").style.display = t === "register" ? "block" : "none";
+    document.getElementById("tab-login").classList.toggle("active", t === "login");
+    document.getElementById("tab-register").classList.toggle("active", t === "register");
+    showMsg("", "");
+}
+
+// ── 消息提示 ──
+function showMsg(text, type = "err") {
+    const el = document.getElementById("msgArea");
+    el.className = "msg-area " + type;
+    el.textContent = text;
+}
+
+function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    if (loading) {
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div><span>处理中...</span>';
+    } else {
+        btn.disabled = false;
+        const label = btnId === "loginBtn" ? "登 录" : "注 册";
+        btn.innerHTML = `<span>${label}</span>`;
+    }
+}
+
+// ── 头像 ──
+function loadAvatar(user) {
+    const saved = localStorage.getItem("userAvatar_" + user);
+    document.getElementById("avatarPreview").src = saved || "https://picsum.photos/id/64/100/100";
+}
+
+document.getElementById("avatarInput").onchange = async function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const base64 = await fileToBase64(file);
+    document.getElementById("avatarPreview").src = base64;
+    const user = document.getElementById("login-username").value.trim() || document.getElementById("reg-username").value.trim();
+    if (user) localStorage.setItem("userAvatar_" + user, base64);
+};
+
+function fileToBase64(file) {
+    return new Promise(res => {
+        const r = new FileReader();
+        r.onload = e => res(e.target.result);
+        r.readAsDataURL(file);
+    });
+}
+
+// ── 登录 ──
+async function doLogin() {
+    const username = document.getElementById("login-username").value.trim();
+    const password = document.getElementById("login-password").value;
+    if (!username || !password) return showMsg("请输入账号和密码");
+
+    setLoading("loginBtn", true);
+    try {
+        const res = await fetch(API + "/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (data.code === 200) {
+            showMsg("登录成功，跳转中…", "ok");
+            localStorage.setItem("token", data.data.token);
+            localStorage.setItem("role", data.data.role);
+            localStorage.setItem("username", data.data.username);
+            localStorage.setItem("LAST_LOGIN_USER", username);
+            // 兼容旧版 login 标记
+            localStorage.setItem("login", "1");
+            setTimeout(() => { location.href = "index.html"; }, 600);
+        } else {
+            showMsg(data.msg || "登录失败");
+            setLoading("loginBtn", false);
+        }
+    } catch {
+        showMsg("无法连接服务器，请确认后端已启动");
+        setLoading("loginBtn", false);
+    }
+}
+
+// ── 注册 ──
+async function doRegister() {
+    const username = document.getElementById("reg-username").value.trim();
+    const password = document.getElementById("reg-password").value;
+    const confirm  = document.getElementById("reg-confirm").value;
+    if (!username || !password) return showMsg("请填写完整信息");
+    if (password !== confirm) return showMsg("两次密码不一致");
+    if (password.length < 6) return showMsg("密码至少 6 位");
+
+    setLoading("registerBtn", true);
+    try {
+        const res = await fetch(API + "/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (data.code === 200) {
+            showMsg("注册成功！请登录", "ok");
+            setTimeout(() => switchTab("login"), 1000);
+        } else {
+            showMsg(data.msg || "注册失败");
+        }
+    } catch {
+        showMsg("无法连接服务器");
+    }
+    setLoading("registerBtn", false);
+}
+</script>
+</body>
+</html>
